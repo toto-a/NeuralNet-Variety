@@ -124,5 +124,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-out/
-logs/
+
+Bert_fine_tuned/
