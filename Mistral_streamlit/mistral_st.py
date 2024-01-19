@@ -2,10 +2,11 @@ import streamlit as st
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+st.set_page_config(
+        page_title="Mistral response", page_icon=":bird:")
 
 
-
-model_name = "mistralai/Mistral-7B-Instruct-v0.1"
+model_name = "mistralai/Mistral-7B-v0.1"
 model=AutoModelForCausalLM.from_pretrained(model_name)
 tokenizer=AutoTokenizer.from_pretrained(model_name)
 
@@ -20,16 +21,15 @@ def generate_text(prompt):
 
 
 def main():
-    st.set_page_config(
-        page_title="Mistral response", page_icon=":bird:")
+   
 
    
 
     st.header("Mistral Response")
-    user_input=st.text_input("Enter a prompt :")
+    user_input=st.chat_input("Enter a prompt :")
 
     if user_input:
-        st.write("Generating best practice message...")
+        st.write(user_input)
 
         result = generate_text(user_input)
 
