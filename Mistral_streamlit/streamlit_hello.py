@@ -20,13 +20,7 @@ system_prompt= st.text_area(
     )
 
 # Initialize chat history
-if "messages" not in st.session_state:
-    st.session_state.messages = []
 
-# Display chat messages from history on app rerun
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
 
 
 
@@ -62,6 +56,16 @@ def create_prompt_mistral(system_prompt):
 
 
 def main():
+
+    if "messages" not in st.session_state:
+        st.session_state.messages = {"role": "assistant", "content": "How may I help you today?"}
+    
+    # Display chat messages from history on app rerun
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+
     llm_chain = create_prompt_mistral(system_prompt)
     
     if user_prompt := st.chat_input("Your message here", key="user_input"):
