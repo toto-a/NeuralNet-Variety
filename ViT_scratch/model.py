@@ -5,6 +5,8 @@ from torch.utils.data import DataLoader
 from dataclasses import dataclass
 from typing import Optional,Tuple
 
+from utils import fast_get_patches
+
 @dataclass
 class ViTModelArgs :
     dim: int =512
@@ -13,9 +15,13 @@ class ViTModelArgs :
     n_layers : int =12
     dropout : Optional[float] = 0.2
     patch_size : int  = 16 ## 16*16 patches
+    img : torch.Tensor =None
     img_size: int = None 
     out_classes : int = 10
-    seq_len_img : int =None
+    seq_len_patches : int =patch_size**2
+    hidden_d_mapper_mult : float = 0.5 
+    batch_size : int =32
+    device : str='cuda' if torch.cuda.is_available() else 'cpu'
 
 
 
@@ -23,7 +29,9 @@ class ViTModelArgs :
 class PositionalEmbeddings(nn.Module):
     def __init__(self, args : ViTModelArgs) -> None:
         super().__init__()
-        self.position_embedding=nn.Embedding(args.seq_len_img,args.dim)
+        self.seq=args.seq_len_patches + 1
+        self.hidden_d_mapper=args.hidden_d_mapper_mult*args.seq_len_patches
+        self.position_embedding=nn.Embedding(args.seq_len_patches,self.hidden_d_mapper)
     
     def forward(self,img_flat:torch.tensor):
         out=img_flat+self.position_embedding(img_flat)
@@ -131,14 +139,37 @@ class Classifier(nn.Module):
 class Vit(nn.Module):
     def __init__(self, args : ViTModelArgs) -> None:
         super().__init__()
-        self.input_embed=nn.Embedding(args.patch_size,args.dim)
+        self.patch_dim=(args.patch_size,args.patch_size)
+        self.device=args.device
+        self.hidden_d_mapper=args.hidden_d_mapper_mult*args.seq_len_patches
+        
+        ### Class Token and linear mapper
+        self.class_token=nn.Parameter(torch.rand(1,self.hidden_d_mapper))
+        self.linear_mapper=nn.Linear(args.seq_len_patches,self.hidden_d_mapper)
+
+        ###Positional embeddings and token embeddings
         self.position_embedding=PositionalEmbeddings(args)
         self.encoder=VitEncoder(args=args)
         self.classifier=Classifier(args)
     
     
-    def forward(self, img_flat : torch.tensor):
-        out_embed=self.position_embedding(self.input_embed(img_flat))
+    def forward(self, imgs : torch.tensor):
+
+        patches=fast_get_patches(imgs,self.patch_dim,self.device)
+        tokens=self.linear_mapper(patches)
+
+        ##Add classification tokens
+        B,n_patches,s_patches_mapped=tokens.shape
+
+        #(1,hidden_d)->(Batch_size,1,hidden_d)
+        self.class_token=self.class_token[None,:,:].expand(B,-1,s_patches_mapped)
+
+        #(Batch_size,n_patches,hidden_d) and (Batch_size,1,hidden_d)-> (B,n_patches+1,hidden_d)
+        tokens=torch.cat([self.class_token,tokens],dim=1)
+        
+        ##Repeat the positional encodings for each tokens in the batch
+        self.position_embedding=self.position_embedding.repeat(B,1,1)
+        out_embed=self.position_embedding(tokens)
         out_encoder=self.encoder(out_embed)
         out_classes=self.classifier(out_encoder)
 
