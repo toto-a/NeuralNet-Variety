@@ -10,24 +10,27 @@ class ViTModelArgs :
     dim: int =512
     dim_ffn_multiplier : Optional[int] =4
     n_heads : int =6
+    n_layers : int =12
     dropout : Optional[float] = 0.2
     patch_size : int  = 16 ## 16*16 patches
     img_size: int = None 
+    out_classes : int = 10
     seq_len_img : int =None
 
 
 
+##Learnable positional encoding
 class PositionalEmbeddings(nn.Module):
     def __init__(self, args : ViTModelArgs) -> None:
         super().__init__()
         self.position_embedding=nn.Embedding(args.seq_len_img,args.dim)
     
     def forward(self,img_flat:torch.tensor):
-        out=self.position_embedding(img_flat)
+        out=img_flat+self.position_embedding(img_flat)
         return out
 
 
-class MLPhead(nn.Module):
+class MLP(nn.Module):
     def __init__(self,args:ViTModelArgs) -> None:
         super().__init__()
         self.dim=args.dim
@@ -45,11 +48,13 @@ class MLPhead(nn.Module):
         return x
 
 
+##Self attention
 class MHA(nn.Module):
     def __init__(self, args : ViTModelArgs) -> None:
         super().__init__()
 
-        self.n_heads=args.dim
+        self.dim=args.dim
+        self.n_heads=args.n_heads
 
         ##Pass it all in one chunk because they share the same head
         self.wqvk=nn.Linear(args.dim,3*args.dim)
@@ -57,8 +62,6 @@ class MHA(nn.Module):
         self.attn_dropout=nn.Dropout(args.dropout)
         self.resid_dropout=nn.Dropout(args.dropout)
 
-        self.register_buffer('tril',torch.tril(torch.ones(args.seq_len_img,args.seq_len_img))
-                             .view(1,1,args.seq_len_img,args.seq_len_img))
     
     def forward(self, emb_img : torch.tensor):
 
@@ -72,7 +75,6 @@ class MHA(nn.Module):
         v=v.view(B,T,self.n_heads,C//self.n_heads).transpose(-2,-3)
 
         pre_attn=q@k.transpose(-2,-1)*(1./k.size(-1)) ##to make it unit gaussian
-        pre_attn=pre_attn.masked_fill(self.tril[:,:,:T,:T]==0, float('-inf'))
         att=F.softmax(pre_attn,dim=-1)
         att=self.attn_dropout(att)
         y=att@v
@@ -83,4 +85,61 @@ class MHA(nn.Module):
         return y 
 
 
+class EncoderBlock(nn.Module):
+    def __init__(self,args : ViTModelArgs) -> None:
+        super().__init__()
+        self.n_heads=args.n_heads
+        self.pre_attn_norm=nn.LayerNorm(args.seq_len_img)
+        self.sa_heads=MHA(args=args)
+        self.pre_mlp_norm=nn.LayerNorm(args.dim)
+        self.mlp_head=MLP(args=args)
+    
+    def forward(self, embed_patches : torch.tensor):
+        _x=embed_patches
+        embed_patches=self.pre_attn_norm(embed_patches)
+        out=self.pre_mlp_norm(self.sa_heads(embed_patches)+_x)
+        out=out + self.mlp_head(out)
+        return out
+
+
+
+class VitEncoder(nn.Module):
+    def __init__(self, args : ViTModelArgs) -> None:
+        super().__init__()
+        self.n_layers=args.n_layers
+        self.encoders=nn.ModuleList([EncoderBlock(args) for _ in range(self.n_layers)])
+    
+    def forward(self,x:torch.tensor):
+
+        for encoder in self.encoders:
+            x=encoder(x)
+
+        return x
+
+class Classifier(nn.Module):
+    def __init__(self, args:ViTModelArgs ) -> None:
+        super().__init__()
+        self.l1=nn.Linear(args.dim,args.out_classes)
+    
+    def forward(self, encoder_output: torch.tensor):
+        return F.softmax(self.l1(encoder_output),dim=-1)
         
+        
+        
+
+
+class Vit(nn.Module):
+    def __init__(self, args : ViTModelArgs) -> None:
+        super().__init__()
+        self.input_embed=nn.Embedding(args.patch_size,args.dim)
+        self.position_embedding=PositionalEmbeddings(args)
+        self.encoder=VitEncoder(args=args)
+        self.classifier=Classifier(args)
+    
+    
+    def forward(self, img_flat : torch.tensor):
+        out_embed=self.position_embedding(self.input_embed(img_flat))
+        out_encoder=self.encoder(out_embed)
+        out_classes=self.classifier(out_encoder)
+
+        return out_classes
