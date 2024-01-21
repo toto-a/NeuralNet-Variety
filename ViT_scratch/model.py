@@ -9,18 +9,20 @@ from utils import fast_get_patches
 
 @dataclass
 class ViTModelArgs :
-    dim: int =512
+    hidden_size: int =48
     dim_ffn_multiplier : Optional[int] =4
     n_heads : int =6
     n_layers : int =12
     dropout : Optional[float] = 0.2
-    patch_size : int  = 16 ## 16*16 patches
-    img : torch.Tensor =None
-    img_size: int = None 
+    img_size : int =None
+    patch_size : int  = 4 ## 4*4 patches
+    n_channels : int = 1
     out_classes : int = 10
-    seq_len_patches : int =patch_size**2
-    hidden_d_mapper_mult : float = 0.5 
+    seq_input_patches : int =patch_size**2 * n_channels
+    seq_len_patches : int =1 ##n_patches+1
+    patches_vocab_size : int = seq_len_patches *seq_input_patches
     batch_size : int =32
+    n_epochs : int =100
     device : str='cuda' if torch.cuda.is_available() else 'cpu'
 
 
@@ -29,25 +31,24 @@ class ViTModelArgs :
 class PositionalEmbeddings(nn.Module):
     def __init__(self, args : ViTModelArgs) -> None:
         super().__init__()
-        self.seq=args.seq_len_patches + 1
-        self.hidden_d_mapper=args.hidden_d_mapper_mult*args.seq_len_patches
-        self.position_embedding=nn.Embedding(args.seq_len_patches,self.hidden_d_mapper)
+        self.seq_len=args.seq_len_patches
+        self.hidden_d_mapper=args.hidden_size
+        self.hidden_size=args.hidden_size
+        self.position_embedding=nn.Parameter(torch.randn(1,self.seq_len +1 , self.hidden_size))
     
-    def forward(self,img_flat:torch.tensor):
-        out=img_flat+self.position_embedding(img_flat)
-        return out
+    def forward(self,x):
+        return x+self.position_embedding
 
 
 class MLP(nn.Module):
     def __init__(self,args:ViTModelArgs) -> None:
         super().__init__()
-        self.dim=args.dim
+        self.dim=args.hidden_size
         self.hidden_dim=args.dim_ffn_multiplier*self.dim
         self.net=nn.Sequential(
-            nn.Linear(args.dim,self.hidden_dim,bias=False),
+            nn.Linear(self.dim,self.hidden_dim),
             nn.GELU(),
-            nn.Linear(args.dim,self.hidden_dim,bias=False),
-            nn.Linear(self.hidden_dim,args.img_size,bias=False),
+            nn.Linear(self.hidden_dim,self.dim),
             nn.Dropout(args.dropout)
         )
     
@@ -61,12 +62,12 @@ class MHA(nn.Module):
     def __init__(self, args : ViTModelArgs) -> None:
         super().__init__()
 
-        self.dim=args.dim
+        self.dim=args.hidden_size
         self.n_heads=args.n_heads
 
         ##Pass it all in one chunk because they share the same head
-        self.wqvk=nn.Linear(args.dim,3*args.dim)
-        self.proj=nn.Linear(args.dim,args.dim)
+        self.wqvk=nn.Linear(self.dim,3*self.dim,bias=False)
+        self.proj=nn.Linear(self.dim,self.dim)
         self.attn_dropout=nn.Dropout(args.dropout)
         self.resid_dropout=nn.Dropout(args.dropout)
 
@@ -97,9 +98,10 @@ class EncoderBlock(nn.Module):
     def __init__(self,args : ViTModelArgs) -> None:
         super().__init__()
         self.n_heads=args.n_heads
-        self.pre_attn_norm=nn.LayerNorm(args.seq_len_img)
+        self.hidden_size=args.hidden_size
+        self.pre_attn_norm=nn.LayerNorm(self.hidden_size)
         self.sa_heads=MHA(args=args)
-        self.pre_mlp_norm=nn.LayerNorm(args.dim)
+        self.pre_mlp_norm=nn.LayerNorm(args.hidden_size)
         self.mlp_head=MLP(args=args)
     
     def forward(self, embed_patches : torch.tensor):
@@ -127,7 +129,7 @@ class VitEncoder(nn.Module):
 class Classifier(nn.Module):
     def __init__(self, args:ViTModelArgs ) -> None:
         super().__init__()
-        self.l1=nn.Linear(args.dim,args.out_classes)
+        self.l1=nn.Linear(args.hidden_size,args.out_classes)
     
     def forward(self, encoder_output: torch.tensor):
         return F.softmax(self.l1(encoder_output),dim=-1)
@@ -141,11 +143,11 @@ class Vit(nn.Module):
         super().__init__()
         self.patch_dim=(args.patch_size,args.patch_size)
         self.device=args.device
-        self.hidden_d_mapper=args.hidden_d_mapper_mult*args.seq_len_patches
+        self.dim=args.hidden_size
         
         ### Class Token and linear mapper
-        self.class_token=nn.Parameter(torch.rand(1,self.hidden_d_mapper))
-        self.linear_mapper=nn.Linear(args.seq_len_patches,self.hidden_d_mapper)
+        self.class_token=nn.Parameter(torch.rand((1,1,self.dim),dtype=torch.float,device=self.device))
+        self.linear_mapper=nn.Linear(args.seq_input_patches,self.dim)
 
         ###Positional embeddings and token embeddings
         self.position_embedding=PositionalEmbeddings(args)
@@ -155,6 +157,7 @@ class Vit(nn.Module):
     
     def forward(self, imgs : torch.tensor):
 
+
         patches=fast_get_patches(imgs,self.patch_dim,self.device)
         tokens=self.linear_mapper(patches)
 
@@ -162,13 +165,12 @@ class Vit(nn.Module):
         B,n_patches,s_patches_mapped=tokens.shape
 
         #(1,hidden_d)->(Batch_size,1,hidden_d)
-        self.class_token=self.class_token[None,:,:].expand(B,-1,s_patches_mapped)
+        cls_token=self.class_token.expand(B,-1,s_patches_mapped)
 
         #(Batch_size,n_patches,hidden_d) and (Batch_size,1,hidden_d)-> (B,n_patches+1,hidden_d)
-        tokens=torch.cat([self.class_token,tokens],dim=1)
+        tokens=torch.cat([cls_token,tokens],dim=1)
         
-        ##Repeat the positional encodings for each tokens in the batch
-        self.position_embedding=self.position_embedding.repeat(B,1,1)
+        ##Sum the encodings
         out_embed=self.position_embedding(tokens)
         out_encoder=self.encoder(out_embed)
         out_classes=self.classifier(out_encoder)

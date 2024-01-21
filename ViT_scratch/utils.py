@@ -1,5 +1,6 @@
 import torch
 import math
+import torch.nn as nn
 from typing import Tuple
 
 
@@ -18,6 +19,7 @@ def fast_get_patches(imgs : torch.tensor, patch_dim : Tuple[int], device : str):
     patches=imgs.view(B,num_patches,patch_size*c).type_as(imgs).to(device)
     
     return patches
+
 
 def slow_get_patches(imgs : torch.tensor, patch_dim : Tuple[int], device :str):
     
@@ -42,3 +44,26 @@ def slow_get_patches(imgs : torch.tensor, patch_dim : Tuple[int], device :str):
     
     patches=patches.to(device)
     return patches
+
+
+class PatchEmbedddings(nn.Module) :
+    def __init__(self,config):
+        super().__init__()
+        
+        self.image_size=config.img_size
+        self.patch_size = config.patch_size
+        self.num_channels = config.n_channels
+        self.hidden_size = config.hidden_size
+        # Calculate the number of patches from the image size and patch size
+        self.num_patches = (self.image_size // self.patch_size) ** 2
+        # Create a projection layer to convert the image into patches
+        # The layer projects each patch into a vector of size hidden_size
+        self.projection = nn.Conv2d(self.num_channels, self.hidden_size, kernel_size=self.patch_size, stride=self.patch_size)
+
+    def forward(self, x):
+        # (batch_size, num_channels, H, W) -> (batch_size, num_patches, hidden_size)
+        x = self.projection(x)
+        x = x.flatten(2).transpose(1, 2)
+        return x
+    
+        
