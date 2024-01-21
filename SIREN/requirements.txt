@@ -1,0 +1,5 @@
+torch
+tqdm
+matplotlib
+numpy==1.24.2
+scikit-image

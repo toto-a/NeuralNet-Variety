@@ -26,7 +26,7 @@ def train(model,model_optimizer, nb_epochs=EPOCHS):
 
 
 if __name__=="__main__" :
-    device='cuda'
+    device='cuda' if torch.cuda.is_available() else 'cpu'
     siren=SIREN().to(device)
     mlp=MLP().to(device)
     
