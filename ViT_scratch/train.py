@@ -75,7 +75,7 @@ def main():
         for batch in tqdm(train_loader, desc=f"Epoch {epoch + 1} in training", leave=False):
             x, y = batch
             x, y = x.to(device), y.to(device)
-            y_hat = model(x)
+            y_hat = model(x) ## (B,T,C)
             loss = criterion(y_hat, y)
 
             train_loss += loss.detach().cpu().item() / len(train_loader)
@@ -84,7 +84,7 @@ def main():
             loss.backward()
             optimizer.step()
 
-        print(f"Epoch {epoch + 1}/{n_epochs} loss: {train_loss:.2f}")
+        print(f" Epoch {epoch + 1}/{n_epochs} loss: {train_loss:.2f}")
     test(test_loader=test_loader,model=model,criterion=criterion)
 
 

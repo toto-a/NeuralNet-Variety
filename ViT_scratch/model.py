@@ -88,7 +88,7 @@ class MHA(nn.Module):
         att=self.attn_dropout(att)
         y=att@v
 
-        y=att.transpose(1,2).contiguous().view(B,T,C) ##(B,T,C)
+        y=y.transpose(1,2).contiguous().view(B,T,C) ##(B,T,C)
         y=self.resid_dropout(self.proj(y))
 
         return y 
@@ -173,6 +173,18 @@ class Vit(nn.Module):
         ##Sum the encodings
         out_embed=self.position_embedding(tokens)
         out_encoder=self.encoder(out_embed)
-        out_classes=self.classifier(out_encoder)
+
+        out_cls_token=out_encoder[:,0]
+        out_classes=self.classifier(out_cls_token)
 
         return out_classes
+    
+    def _init_weight(self,module) :
+        if isinstance(module, (nn.Linear, nn.Conv2d)):
+            torch.nn.init.normal_(module.weight, mean=0.0, std=self.config["initializer_range"])
+            if module.bias is not None:
+                torch.nn.init.zeros_(module.bias)
+        elif isinstance(module, nn.LayerNorm):
+            module.bias.data.zero_()
+            module.weight.data.fill_(1.0)
+        
