@@ -4,13 +4,19 @@ import torch.nn.functional as F
 import torch.optim as optim
 from typing import Callable
 from tqdm import tqdm
+import os
 import copy
 import numpy as np
 import matplotlib.pyplot as plt
 from _meta import MLP
 
-## Learning to learn 
+##Current dir
+cwd=os.getcwd()
+path=cwd + '/image'
+if not os.path.exists(path):
+    os.mkdir(path)
 
+## Learning to learn 
 def reptile(model : nn.Module, nb_iterations: int , sample_task : Callable,
             perform_k_training_steps : Callable, k=1, episilon=0.1):
 
@@ -68,7 +74,7 @@ if __name__=="__main__":
     
     device ='cuda' if torch.cuda.is_available() else 'cpu'
     model=MLP()
-    reptile(model, 300, sample_task, perform_k_training_steps)
+    reptile(model, 3000, sample_task, perform_k_training_steps)
 
     with torch.no_grad():
 
@@ -82,8 +88,8 @@ if __name__=="__main__":
     y_pred_after=model(x)
 
     
-    plt.plot(x.numpy(), y_pred_before, label='Before')
-    plt.plot(x.numpy(), y_pred_after, label ='After')
-    plt.plot(true_x.numpy(), true_y.numpy(), label='True')
+    plt.plot(x.detach().numpy(), y_pred_before.detach().numpy(), label='Before')
+    plt.plot(x.detach().numpy(), y_pred_after.detach().numpy(), label ='After')
+    plt.plot(true_x.detach().numpy(), true_y.detach().numpy(), label='True')
     plt.legend(fontsize=11)
     plt.savefig('image/Meta_learning.png')
