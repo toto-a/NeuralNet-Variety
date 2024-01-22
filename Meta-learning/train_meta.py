@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F 
 import torch.optim as optim
 from typing import Callable
-import tqdm as tqdm
+from tqdm import tqdm
 import copy
 import numpy as np
 import matplotlib.pyplot as plt
