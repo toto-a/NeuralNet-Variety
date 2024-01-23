@@ -10,4 +10,8 @@ For example, see [here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Mi
 
 [Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Edge_detection) for some edge detection using opencv dnn and a semi automatic canny
 
+[Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/SIREN) for an implementaion of SIREN
+
+[Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/NeRF) for an implementaion of a NeRF
+
 
