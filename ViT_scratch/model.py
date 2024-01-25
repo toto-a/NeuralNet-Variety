@@ -126,15 +126,7 @@ class VitEncoder(nn.Module):
 
         return x
 
-class Classifier(nn.Module):
-    def __init__(self, args:ViTModelArgs ) -> None:
-        super().__init__()
-        self.l1=nn.Linear(args.hidden_size,args.out_classes)
-    
-    def forward(self, encoder_output: torch.tensor):
-        return F.softmax(self.l1(encoder_output),dim=-1)
-        
-        
+
         
 
 
@@ -152,7 +144,7 @@ class Vit(nn.Module):
         ###Positional embeddings and token embeddings
         self.position_embedding=PositionalEmbeddings(args)
         self.encoder=VitEncoder(args=args)
-        self.classifier=Classifier(args)
+        self.l1=nn.Linear(args.hidden_size,args.out_classes)
     
     
     def forward(self, imgs : torch.tensor):
@@ -175,7 +167,7 @@ class Vit(nn.Module):
         out_encoder=self.encoder(out_embed)
 
         out_cls_token=out_encoder[:,0]
-        out_classes=self.classifier(out_cls_token)
+        out_classes=self.l1(out_cls_token)
 
         return out_classes
     
