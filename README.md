@@ -14,4 +14,6 @@ For example, see [here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Mi
 
 [Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/NeRF) for an implementaion of a NeRF
 
+[Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Meta-Learning) for an implementaion of a simple Meta-Learning algorithm (Learning to learn)
 
+[Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/GANs) for an implementaion of different GANs (simple, DCGAN, WGAN,..)
