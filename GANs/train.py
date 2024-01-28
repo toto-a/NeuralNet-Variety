@@ -10,9 +10,10 @@ from torch.utils.tensorboard import SummaryWriter
 import matplotlib.pyplot as plt
 from tqdm import tqdm,trange
 
-from gan import Discriminator,Generator
+# from gan import Discriminator,Generator
+from dcgan import Discriminator,Generator
 
-# Hyperparameters etc.
+# Hyperparameters 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 lr = 3e-4
 z_dim = 64
