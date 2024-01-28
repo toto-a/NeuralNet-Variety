@@ -129,6 +129,7 @@ Bert_fine_tuned/
 .vscode/
 ViT_scratch/*.ipynb
 *.pkl
-datasets/
+dataset/
+logs/
 GANs/dataset/
 GANs/logs/
