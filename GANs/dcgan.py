@@ -34,7 +34,7 @@ class Generator(nn.Module):
         super().__init__()
         self.gen = nn.Sequential(  
             #input N*z_dim*1*1
-            self._block(z_dim, features_g*16,kernel_size=4), #shape ->N*(fg*16)*4*4
+            self._block(z_dim, features_g*16,kernel_size=4,stride=1,padding=0), #shape ->N*(fg*16)*4*4
             self._block(features_g*16, features_g*8,kernel_size=4,stride=2,padding=1),
             self._block(features_g*8, features_g*4,kernel_size=4,stride=2,padding=1),
             self._block(features_g*4, features_g*2,kernel_size=4,stride=2,padding=1),
