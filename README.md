@@ -6,6 +6,8 @@
 
 For example, see [here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Mistral_streamlit) for a working chatbot using mistral-7b.
 
+[Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/ResNet) for an implementation of more classical architecture from scratch (ResNet, U-Net, AE, ...)
+
 [Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/ViT_scratch) for an implementation from scratch of a vision transformer
 
 [Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Edge_detection) for some edge detection using opencv dnn and a semi automatic canny
