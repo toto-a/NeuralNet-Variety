@@ -20,7 +20,7 @@ Instead of using positional embeddings like mentionned in the paper, I decided t
   _Difference between sinusoidal embeddings in Transformers and fourier based encodings in recent model like SAM_
 </p>
 
-As we can see for the sinusoidal embeddings, if we take two groups of two pixels with the same distance between them. They will have differents encodings meaning they don't hold the same amount of information, wchich is somewhat wrong. The fourier based encodings seems resomve this issue
+As we can see for the sinusoidal embeddings, if we take two groups of two pixels with the same distance between them. They will have differents encodings meaning they don't hold the same amount of information, which is somewhat wrong. The fourier based encodings resolves this issue
 
 
 
