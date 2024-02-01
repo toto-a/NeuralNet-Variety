@@ -133,3 +133,5 @@ dataset/
 logs/
 GANs/dataset/
 GANs/logs/
+ResNet/data/
+data/
