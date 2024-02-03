@@ -46,9 +46,8 @@ class Decoder(nn.Module):
 
 
 class UNet(nn.Module):
-    def __init__(self,images,n_classes=2 ) -> None:
+    def __init__(self,C,n_classes=2 ) -> None:
         super().__init__()
-        _,C,_,_=images.shape
         self.encode1=Encoder(C,64)
         self.encode2=Encoder(64,128)
         self.encode3=Encoder(128,256)
@@ -94,7 +93,7 @@ class UNet(nn.Module):
         
 if __name__=="__main__" :
     x=torch.randn(4,1,576,576,device='cuda')
-    model=UNet(x).to('cuda')
+    model=UNet(1).to('cuda')
     out=model(x)
            
         

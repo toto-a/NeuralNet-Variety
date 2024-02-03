@@ -7,7 +7,8 @@ from torch.utils.data.sampler import SubsetRandomSampler
 from tqdm import tqdm
 import gc
 
-from resnet import ResNet
+# from ResNet.resnet import ResNet
+from UNet.unet import UNet
 
 
 # Device configuration
@@ -134,7 +135,8 @@ def train(model,criterion,optimizer,loader):
 if __name__=="__main__":
     
    
-    model=ResNet([3,4,6,3],10).to(device)
+    # model=ResNet([3,4,6,3],10).to(device)
+    model=UNet(C=3).to(device)
 
     # Loss and optimizer
     criterion = nn.CrossEntropyLoss()
