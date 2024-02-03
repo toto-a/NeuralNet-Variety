@@ -3,7 +3,7 @@
 
 ## Squeeze and excitation block 
 
-![snet](assets/snet_block.png)
+![snet](assets/senet_block.png)
 
 
 ## CBAM 
