@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from snet import SNet
 
 class Spatial_Attention (nn.Module):
     def __init__(self,kernel_size=7 ) -> None:
