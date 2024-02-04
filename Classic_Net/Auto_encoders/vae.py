@@ -46,21 +46,16 @@ class VAE(nn.Module) :
         return z
     
     
-    def decoder(self,z):
+    def decode(self,z):
         return self.decoder(z)
     
     
     def forward(self,x) :
         mu,log_var=self.encode(x)
         z=self.reparametrize(mu,log_var)
-        x_hat=self.decoder(z)
+        x_hat=self.decode(z)
         
         return x_hat,mu,log_var
 
 
 
-def loss_function(x, x_hat, mean, log_var):
-    reproduction_loss = nn.functional.binary_cross_entropy(x_hat, x, reduction='sum')
-    KLD = - 0.5 * torch.sum(1+ log_var - mean.pow(2) - log_var.exp())
-
-    return reproduction_loss + KLD
