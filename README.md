@@ -6,7 +6,7 @@
 
 For example, see [here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Mistral_streamlit) for a working chatbot using mistral-7b.
 
-[Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/ResNet) for an implementation of more classical architecture from scratch (ResNet, U-Net, AE, ...)
+[Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Classic_Net) for an implementation of more classical architecture from scratch (ResNet, U-Net, AE, ...)
 
 [Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/ViT_scratch) for an implementation from scratch of a vision transformer
 
@@ -18,4 +18,7 @@ For example, see [here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Mi
 
 [Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Meta-Learning) for an implementaion of a simple Meta-Learning algorithm (Learning to learn)
 
-[Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/GANs) for an implementaion of different GANs (simple, DCGAN, WGAN,..)
+[Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/GANs) for an implementation of different GANs (simple, DCGAN, WGAN,..)
+
+[Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Attention_Net) for an implementation of different attention modules (senet,cbam,..)
+
