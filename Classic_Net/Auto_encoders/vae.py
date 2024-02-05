@@ -39,10 +39,11 @@ class VAE(nn.Module) :
     
     
     def reparametrize(self,mu,log_var):
+
+        ##Stochastic node
         epsilon=torch.randn_like(log_var).to(device)
         z=mu + log_var*epsilon
         
-        ### Sampled distribution
         return z
     
     
