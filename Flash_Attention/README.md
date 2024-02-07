@@ -7,6 +7,8 @@
 
 This repository contains a personal and simplified implementation of the Flash Attention mechanism in PyTorch. Flash Attention is a novel attention mechanism that is designed to be more efficient and scalable than traditional attention mechanisms.
 
+![flashatt](flash.png)
+
 ## Source 
 
 The amazing medium blog by Aleksa Gordić:
