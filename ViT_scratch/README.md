@@ -6,6 +6,11 @@
 
 Instead of using positional embeddings like mentionned in the paper, I decided to use learnable positional embeddings (see the reason [below](#Different-Positional-Encodings) )
 
+Overall architecture : 
+
+![vit](image/vision-transformer-vit.png)
+
+
 ## Different Positional Encodings
 
 
