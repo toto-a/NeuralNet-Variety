@@ -11,7 +11,7 @@ This repository contains a personal and simplified implementation of the Flash A
 
 ## Algorithm Step
 
-![algo](assets/flashste.png)
+![algo](assets/flashstep.png)
 
 
 ## Source 
