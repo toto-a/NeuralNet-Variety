@@ -9,6 +9,11 @@ This repository contains a personal and simplified implementation of the Flash A
 
 ![flashatt](assets/flash.png)
 
+## Algorithm Step
+
+![algo](assets/flashstep.png)
+
+
 ## Source 
 
 The amazing medium blog by Aleksa Gordić:
