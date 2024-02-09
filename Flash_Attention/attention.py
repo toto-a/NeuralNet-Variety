@@ -107,7 +107,7 @@ class FlashAttentionFunc(Function):
         m = torch.cat(m_block, dim=2)
 
         ctx.args=(scale,mask,Br,Bc)
-        ctx.save_for_backward(q,k,v,O,l,m)
+        ctx.save_for_backward(q,k,v,O,l,m,dropout)
 
         return O 
     
@@ -116,7 +116,7 @@ class FlashAttentionFunc(Function):
     def backward(ctx: torch.Any, do: torch.Any) -> torch.Any:
 
         scale,mask,Br,Bc=ctx.args
-        q,k,v,o,l,m=ctx.saved_tensors
+        q,k,v,o,l,m,dropout=ctx.saved_tensors
 
         q_block=q.split(Br, dim=-2)
         l_block=list(l.split(Br, dim=-2)) # 1D
@@ -146,6 +146,9 @@ class FlashAttentionFunc(Function):
             mask_j=mask_block[j]
 
 
+            dK_=torch.zeros_like(K_j)
+            dV_=torch.zeros_like(V_j)
+
             for i in range(Tr) :
                 Q_i=q_block[i]
                 Oi=o_block[i]
@@ -160,22 +163,30 @@ class FlashAttentionFunc(Function):
                 sij=sij.masked_fill(mask_j[:,:,:T,:d]==0,float('-inf'))
 
                 m_tilde_ij=torch.max(sij,dim=-1,keepdim=True).values
-                P_tilde_ij=1/li*torch.exp(sij-m_tilde_ij)
+                P_ij=1/li*torch.exp(sij-m_tilde_ij)
 
-                
-                
+                ##Mask
+                P_ij.masked_fill(mask_j[:,:,:T,:d]==0,0)
 
+                dV_[j]=dV_[j] + einsum('... i k, ... i j -> ... k j',P_ij,doi)
+                dPij=einsum('...  i k, ... j k -> ... i j',doi,V_j)
 
+                Di=torch.sum(doi*Oi,dim=-1,keepdim=True)
+                dsij=P_ij*(dPij-Di)
+                dqi=dqi+einsum('... i k, ... k j ->... i j',dsij,K_j)
 
-                
-                
-
-
-
+                dK_[j]=dK_[j]+einsum('... i j, ... i k -> ... j k',dsij,Q_i)
         
+            dk_block[j]=dK_[j]
+            dv_block[j]=dV_[j]
         
+        dq=torch.cat(dq_block, dim=2)
+        dk=torch.cat(dk_block, dim=2)
+        dv=torch.cat(dv_block, dim=2)
     
-
+        return dq,dk,dv
+        
+        
 
         
 ##### Debugging purposes 
