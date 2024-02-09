@@ -43,8 +43,8 @@ class FlashAttentionFunc(Function):
     @torch.no_grad()
     def forward(ctx,q, k,v, mask = None, dropout=None):
         O=torch.zeros_like(q)
-        l=torch.zeros_like(q[:-1])
-        m=torch.full_like(q[:-1],-float('inf'))
+        l=torch.zeros((*q.shape[:-1],1))
+        m=torch.full((*q.shape[:-1],1),-float('inf'))
         
         
         Br=min(Bc,q.size(-2)) #number of heads and Bc
@@ -107,10 +107,74 @@ class FlashAttentionFunc(Function):
         m = torch.cat(m_block, dim=2)
 
         ctx.args=(scale,mask,Br,Bc)
-        ctx.save_for_backward(q,k,v,O)
+        ctx.save_for_backward(q,k,v,O,l,m)
 
         return O 
+    
+    @staticmethod
+    @torch.no_grad()           
+    def backward(ctx: torch.Any, do: torch.Any) -> torch.Any:
+
+        scale,mask,Br,Bc=ctx.args
+        q,k,v,o,l,m=ctx.saved_tensors
+
+        q_block=q.split(Br, dim=-2)
+        l_block=list(l.split(Br, dim=-2)) # 1D
+        m_block=list(m.split(Br, dim=-2)) # 1D
+        mask_block=mask.split(Br, dim=-2)
+
+        v_block=v.split(Bc, dim=-2)
+        k_block=k.split(Bc, dim=-2)
+        o_block=list(o.split(Br, dim=-2)) #list 
+        
+
+        device=q.device
+
+        dq,dv,dk= torch.zeros_like(q),torch.zeros_like(v),torch.zeros_like(k)
+        dq_block=dq.split(Br, dim=-2)
+        do_block=do.split(Br, dim=-2)
+        dk_block=dk.split(Bc, dim=-2)
+        dv_block=dv.split(Bc, dim=-2)
+
+        Tr=len(dq_block)
+        Tc=len(dk_block)
+
+        
+        for j in range(Tc) :
+            K_j=k_block[j]
+            V_j=v_block[j]
+            mask_j=mask_block[j]
+
+
+            for i in range(Tr) :
+                Q_i=q_block[i]
+                Oi=o_block[i]
+                doi=do_block[i]
+                dqi=dq_block[i]
+                li=l_block[i]
+                mi=m_block[i]
+
+                sij=einsum('bnid,bnjd->bnij',Q_i,K_j)*scale
+                _,_,T,d=sij.size()
                 
+                sij=sij.masked_fill(mask_j[:,:,:T,:d]==0,float('-inf'))
+
+                m_tilde_ij=torch.max(sij,dim=-1,keepdim=True).values
+                P_tilde_ij=1/li*torch.exp(sij-m_tilde_ij)
+
+                
+                
+
+
+
+                
+                
+
+
+
+        
+        
+    
 
 
         
