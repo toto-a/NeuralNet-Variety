@@ -167,16 +167,12 @@ class FlashAttentionFunc(Function):
                 P_ij=1/li*torch.exp(sij-m_tilde_ij)
 
                 ##Mask
-<<<<<<< HEAD:Flash_Attention/flash_attention.py
-<<<<<<< HEAD:Flash_Attention/flash_attention.py
+
                 if exists(mask) :
                     P_ij.masked_fill(mask_j[:,:,:T,:d]==0,0)
-=======
+
                 P_ij.masked_fill(mask_j[:,:,:T,:d]==0,0)
->>>>>>> 94ff2119dadf283fd6aeb5823d7c10417ff1bb3c:Flash_Attention/attention.py
-=======
-                P_ij.masked_fill(mask_j[:,:,:T,:d]==0,0)
->>>>>>> 94ff2119dadf283fd6aeb5823d7c10417ff1bb3c:Flash_Attention/attention.py
+
 
                 dV_[j]=dV_[j] + einsum('... i k, ... i j -> ... k j',P_ij,doi)
                 dPij=einsum('...  i k, ... j k -> ... i j',doi,V_j)
