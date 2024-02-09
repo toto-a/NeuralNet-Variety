@@ -12,9 +12,11 @@ This repository contains a personal and simplified implementation of the Flash A
 ## Algorithm Step
 
 Forward pass: 
+
 ![algo](assets/flashstep.png)
 
-Backward pass 
+Backward pass : 
+
 ![al](assets/flashback.png)
 
 ## Source 
