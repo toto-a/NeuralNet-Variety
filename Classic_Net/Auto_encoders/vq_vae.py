@@ -12,5 +12,11 @@ class VectorQuantizer(nn.Module):
         self._embedding = nn.Embedding(self._num_embeddings, self._embedding_dim)
         self._embedding.weight.data.uniform_(-1/self._num_embeddings, 1/self._num_embeddings)
         self._commitment_cost = commitment_cost
+    
+    
+    def forward(self, inputs):
+        pass
 
-   
+
+
+  
