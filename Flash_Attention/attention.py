@@ -10,6 +10,7 @@ from torch.nn import DataParallel
 
 ##Assume Block size
 Bc=16
+EPS=1e-3
 
 ###-------------
 
@@ -32,6 +33,7 @@ Bc=16
 ## Pij=exp(dot(Qi,Ki.T)-mij(tilde)) 
 ## lij(tilde) = rowsum(Pij)
 
+
 def exists(val):
     return val is not None
 
@@ -39,7 +41,7 @@ class FlashAttentionFunc(Function):
     
     @staticmethod
     @torch.no_grad()
-    def forward(K, v, q, mask = None, dropout=None):
+    def forward(ctx,q, k,v, mask = None, dropout=None):
         O=torch.zeros_like(q)
         l=torch.zeros_like(q[:-1])
         m=torch.full_like(q[:-1],-float('inf'))
@@ -48,14 +50,14 @@ class FlashAttentionFunc(Function):
         Br=min(Bc,q.size(-2)) #number of heads and Bc
         
         if exists(mask) and mask.dim() == 2:
-            mask = rearrange(mask,'b n -> b 1 1 n') # (B,1,1,N)
+            mask = rearrange(mask,'b n -> 1 1 b n') # (B,1,1,N)
 
-        mask_block=mask.split(Br, dim=-1)
+        mask_block=mask.split(Br, dim=-2)
 
         q_block=q.split(Br, dim=-2)
         v_block=v.split(Bc, dim=-2)
-        k_block=K.split(Bc, dim=-2)
-        o_block=O.split(Br, dim=-2)
+        k_block=k.split(Bc, dim=-2)
+        o_block=list(O.split(Br, dim=-2)) #list because of re assignement after
 
         m_block=list(m.split(Br, dim=-2)) # 1D
         l_block=list(l.split(Br, dim=-2)) # 1D
@@ -79,21 +81,34 @@ class FlashAttentionFunc(Function):
                 Q_i=Q_i*scale
 
                 sij=einsum('bnid,bnjd->bnij',Q_i,K_j) ## Dot product of Q_i and K_j.T
+                _,_,T,d=sij.size()
 
                 ##Mask 
-                sij=sij.masked_fill(mask_j==0,'-inf')
+                sij=sij.masked_fill(mask_j[:,:,:T,:d]==0,float('-inf'))
 
-                m_tilde_ij=torch.max(sij,dim=-1).values
+                m_tilde_ij=torch.max(sij,dim=-1,keepdim=True).values
                 P_tilde_ij=torch.exp(sij-m_tilde_ij)
-                l_tilde_ij=torch.sum(P_tilde_ij,dim=-1)
 
-                m_inew=torch.max(m_i,m_tilde_ij)
+                if exists(mask) :
+                    P_tilde_ij.masked_fill(mask_j[:,:,:T,:d]==0,0)
+                                
+                l_tilde_ij=torch.sum(P_tilde_ij,dim=-1,keepdim=True) + EPS
+
+                m_inew=torch.maximum(m_tilde_ij,m_i)
                 l_inew=torch.exp(m_i-m_inew)*l_i + torch.exp(m_tilde_ij-m_inew)*l_tilde_ij
 
-                O_i=torch.inverse(torch.eye(l_inew) )* (torch.eye(l_i)*torch.exp(m_i-m_inew)*O_i + torch.exp(m_tilde_ij-m_inew)*l_tilde_ij )
-                l_i=l_inew
-                m_i=m_inew
+                P_tilde_ij_Vij=torch.einsum('... i j, ... j k -> ... i k',P_tilde_ij,V_j)
+                o_block[i]=1/l_inew  * (l_i*torch.exp(m_i-m_inew)*O_i + torch.exp(m_tilde_ij-m_inew)*P_tilde_ij_Vij )
+                l_block[i]=l_inew
+                m_block[i]=m_inew
     
+        O = torch.cat(o_block, dim=2)
+        l = torch.cat(l_block, dim=2)
+        m = torch.cat(m_block, dim=2)
+
+        ctx.args=(scale,mask,Br,Bc)
+        ctx.save_for_backward(q,k,v,O)
+
         return O 
                 
 
@@ -103,10 +118,10 @@ class FlashAttentionFunc(Function):
 if __name__ == "__main__":
     Q = torch.randn(1, 2, 1024, 1024, requires_grad=True)
     V = torch.randn(1, 2, 1024, 1024, requires_grad=True)
-    K = torch.randn(1, 2, 1024, 1024, requires_grad=True)
-    mask = torch.randint(0, 2, (1, 4096))
+    mask = torch.tril(torch.ones(1024,1024))
+    K=torch.randn(1,2,1024,1024,requires_grad=True)
 
-    d=FlashAttentionFunc.apply(K, V, Q, mask)
+    d=FlashAttentionFunc.apply(Q, K, V,mask)
         
         
 
