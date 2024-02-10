@@ -25,8 +25,8 @@ def run_optimization(optimizer_cstm, x, y,n_iter, **optim_kwargs):
         loss.backward()
         nn.utils.clip_grad_norm_([x,y],1)
         optimizer.step()
-        path[i,0]=x.item()
-        path[i,1]=y.item()
+        path[i,0]=x.detach().numpy()
+        path[i,1]=y.detach().numpy()
     
     return path
 

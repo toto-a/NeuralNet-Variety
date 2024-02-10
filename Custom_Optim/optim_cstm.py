@@ -21,14 +21,15 @@ class MyOptim(Optimizer):
 
 
         c=1
-        if self.state["step"]%500==0:
+        if self.state["step"]%100==0:
             c=50
         
         grad=None
         ## Loop while trying to find a tensor with a gradient
         while grad is None:
-            params =np.random.choice(self.param_groups)
-            tensor=np.random.choice(params["params"])
+            params=np.random.choice(self.param_groups)
+            perm=torch.randperm(len(params["params"]))[:1]
+            tensor=params["params"][perm]
             grad=tensor.grad.data
         
 
