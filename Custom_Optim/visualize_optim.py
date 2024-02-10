@@ -58,7 +58,7 @@ if __name__=='__main__':
         path_cstm=run_optimization(MyOptim,x,y,n_iter,lr=1e-3)
 
         freq=10
-        anim=create_path_visualizer([path_adam[::freq],path_sgd[::freq]],["r","b"],["Adam","SGD"],x_lim=(-1,1.1),y_lim=(-1,1.1),n_seconds=7)
+        anim=create_path_visualizer([path_adam[::freq],path_sgd[::freq],path_cstm[::freq]],["r","b","k"],["Adam","SGD","Custom"],x_lim=(-1,1.1),y_lim=(-1,1.1),n_seconds=7)
         anim.save("./Custom_Optim/optim_comparison_all.gif")
 
 
