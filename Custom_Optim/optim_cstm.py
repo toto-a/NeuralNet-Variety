@@ -22,7 +22,7 @@ class MyOptim(Optimizer):
 
         c=1
         if self.state["step"]%100==0:
-            c=50
+            c=100
         
         grad=None
         ## Loop while trying to find a tensor with a gradient
