@@ -8,6 +8,8 @@ For example, see [here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Mi
 
 [Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Classic_Net) for an implementation of more classical architecture from scratch (AlexNet, VGG, Inception, ResNet, U-Net, AE, VAE, VQ-VAE ...)
 
+[Here](**https://github.com/toto-a/NeuralNet-Variety/tree/main/BiFPN) for an implementation of the bifpn structure  
+
 [Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/ViT_scratch) for an implementation from scratch of a vision transformer
 
 [Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Edge_detection) for some edge detection using opencv dnn and a semi automatic canny
@@ -22,3 +24,4 @@ For example, see [here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Mi
 
 [Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Attention_Net) for an implementation of different attention modules (senet,cbam,..)
 
+[Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Flash_Attention) for an implementation of flash attention in pytorch 
