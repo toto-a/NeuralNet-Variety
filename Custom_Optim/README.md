@@ -4,4 +4,4 @@
 
 Comparaisoon between Adam, SGD and my custom optim (that just move by 100 every 100 step) 
 
-![gif](assets/optim_comparaison_all.gif)
+![gif](assets/optim_comparison_all.gif)
