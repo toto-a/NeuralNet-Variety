@@ -8,7 +8,7 @@ For example, see [here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Mi
 
 [Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Classic_Net) for an implementation of more classical architecture from scratch (AlexNet, VGG, Inception, ResNet, U-Net, AE, VAE, VQ-VAE ...)
 
-[Here](**https://github.com/toto-a/NeuralNet-Variety/tree/main/BiFPN) for an implementation of the bifpn structure  
+[Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/BiFPN) for an implementation of the bifpn structure  
 
 [Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/ViT_scratch) for an implementation from scratch of a vision transformer
 
