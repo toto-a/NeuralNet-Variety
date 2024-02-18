@@ -25,3 +25,6 @@ For example, see [here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Mi
 [Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Attention_Net) for an implementation of different attention modules (senet,cbam,..)
 
 [Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Flash_Attention) for an implementation of flash attention in pytorch 
+
+[Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/CLIP) for an implementation of CLIP 
+
