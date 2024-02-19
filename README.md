@@ -28,3 +28,9 @@ For example, see [here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Mi
 
 [Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/CLIP) for an implementation of CLIP 
 
+## Things to finish 
+
+ - [ ] Test for Flash_Attention
+ - [ ] CLIP 
+
+
