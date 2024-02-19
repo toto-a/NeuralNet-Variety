@@ -4,18 +4,16 @@ from PIL import Image
 from typing import Tuple
 from torch.utils.data  import Dataset, DataLoader
 import albumentations as A
-from transformers import AutoTokenizer  as tokenizer
+from transformers import AutoTokenizer
 
 import config as cfg
 
 
 class CLIPDataset(Dataset):
-    def __init__(self, image_path: str, captions_path: str, tokenizer: tokenizer ,transform: A.Compose = None, mode :str="train"):
-        self.image_path = image_path
-        self.captions_path = captions_path
+    def __init__(self, images, captions , tokenizer ,transform: A.Compose = None, mode :str="train"):
         self.transform = self._get_transform(mode)
-        self.images = os.listdir(image_path)
-        self.captions = os.listdir(captions_path)
+        self.images_path = images
+        self.captions =list(captions)
 
         self.encoded_captions=tokenizer(
             self.captions,
@@ -44,10 +42,9 @@ class CLIPDataset(Dataset):
         return len(self.images)
     
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, str]:
-        image = self.images[idx]
+        image = self.images_path[idx]
         caption = self.captions[idx]
-        image = Image.open(os.path.join(self.image_path, image))
-        caption = open(os.path.join(self.captions_path, caption)).read()
+        image = Image.open(os.path.join(self.images_path, image))
         if self.transform:
             image = self.transform(image)
         return image, caption
