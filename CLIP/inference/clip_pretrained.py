@@ -30,15 +30,15 @@ class CLIP(nn.Module):
         image_embeddings=self.image_projection(image_encoded)
         text_embeddings=self.text_projection(caption_features)
 
+        image_embeddings=image_embeddings/image_embeddings.norm(dim=1,keepdim=True)
+        text_embeddings=text_embeddings/text_embeddings.norm(dim=1,keepdim=True)
         ## Loss
 
         image_embeddings=image_embeddings / self.temperature
         logits_per_text= text_embeddings @ image_embeddings.T 
         logits_per_image= image_embeddings @ text_embeddings.T
-        image_similarity = image_embeddings @ image_embeddings.T
-        text_similarity = text_embeddings @ text_embeddings.T
 
-        targets =  F.softmax((image_similarity+text_similarity)/2 *self.temperature, dim=-1)
+        targets =  F.softmax((logits_per_image + logits_per_text)/2 *self.temperature, dim=-1)
 
         texts_loss = F.cross_entropy(logits_per_text, targets, reduction='none')
         images_loss = F.cross_entropy(logits_per_image, targets.T, reduction='none')
