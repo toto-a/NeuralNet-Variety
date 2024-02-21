@@ -4,7 +4,6 @@ from PIL import Image
 from typing import Tuple
 from torch.utils.data  import Dataset, DataLoader
 import albumentations as A
-from transformers import AutoTokenizer
 
 import config as cfg
 
@@ -39,7 +38,7 @@ class CLIPDataset(Dataset):
             ])
 
     def __len__(self):
-        return len(self.images)
+        return len(self.captions)
     
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, str]:
         image = self.images_path[idx]
