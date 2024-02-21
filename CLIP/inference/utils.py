@@ -1,3 +1,52 @@
+import numpy as np
+from torch.utils.data  import DataLoader
+import config as cfg
+import pandas as pd
+from typing import Tuple
+from clip_dataset import CLIPDataset
+
+def make_data(captions_path : str =cfg.captions_path) :
+    captions_df=pd.read_csv(captions_path)
+    max_ids=captions_df.shape[0] +1
+    image_ids=np.arange(0,max_ids) 
+    captions_df["id"]=image_ids[:-1]
+
+    ## Set the see for reproducibility
+    np.random.seed(42)
+    valids_ids=np.random.choice(image_ids, size=int(0.2*max_ids), replace=False) 
+    train_ids=np.setdiff1d(image_ids,valids_ids)
+
+    train_df=captions_df[captions_df["id"].isin(train_ids)]
+    valid_df=captions_df[captions_df["id"].isin(valids_ids)]
+
+    return train_df,valid_df
+
+    
+def get_split(split :str="train"):
+    train_df , valid_df=make_data()
+    return train_df if split=="train" else valid_df
+    
+
+def get_data(dataset_split,tokenizer, split):
+    dataset=CLIPDataset(
+        dataset_split["image"].values,
+        dataset_split["caption"].values,
+        tokenizer,
+        split,
+
+    )
+
+    dataloader=DataLoader(
+        dataset,
+        batch_size=cfg.batch_size,
+        shuffle=True,
+        num_workers=cfg.num_workers,
+    )
+
+    return dataloader
+
+
+
 class AvgMeter:
     def __init__(self, name="Metric"):
         self.name = name
@@ -18,3 +67,9 @@ class AvgMeter:
 def get_lr(optimizer):
     for param_group in optimizer.param_groups:
         return param_group["lr"]
+
+
+def cosine_scheduler(init_value, final_value, epochs, iter_per_epoch, warmup, warmup_start_value =0):
+
+    pass
+
