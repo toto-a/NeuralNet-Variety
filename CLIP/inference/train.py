@@ -1,66 +1,39 @@
 import torch
-import torch.nn as nn
+import torch.optim as optim
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
-from utils import get_lr, AvgMeter
+from utils import get_lr, AvgMeter, get_data, make_data, get_split,cosine_scheduler
 from tqdm import tqdm
 from transformers import DistilBertTokenizer
-import pandas as pd
-import numpy as np
-
 import config as cfg
-from typing import Tuple
-from clip_dataset import CLIPDataset
 from clip_pretrained import CLIP
 
-def make_data(captions_path : str =cfg.captions_path) :
-    captions_df=pd.read_csv(captions_path)
-    max_ids=captions_df.shape[0] +1
-    image_ids=np.arange(0,max_ids) 
-    captions_df["id"]=image_ids[:-1]
-
-    ## Set the see for reproducibility
-    np.random.seed(42)
-    valids_ids=np.random.choice(image_ids, size=int(0.2*max_ids), replace=False) 
-    train_ids=np.setdiff1d(image_ids,valids_ids)
-
-    train_df=captions_df[captions_df["id"].isin(train_ids)]
-    valid_df=captions_df[captions_df["id"].isin(valids_ids)]
-
-    return train_df,valid_df
-
+@torch.no_grad()
+def estimate_loss(model,valid_loader=get_split("valid")):
     
-def get_split(split :str="train"):
-    train_df , valid_df=make_data()
-    return train_df if split=="train" else valid_df
+    loss=AvgMeter()
+    loss_meter =AvgMeter()
+    tqdm_object = tqdm(valid_loader, total=len(valid_loader))
+
+    model.eval()
+    for i,batch in enumerate(tqdm_object):
+        image,caption=batch["image"], batch["caption"]
+        count=batch["image"].size(0)
+        loss_meter.update(loss.item(),count)
+
+        tqdm_object.set_postfix(loss_meter.avg())
     
-
-def get_data(dataset_split,tokenizer, split):
-    dataset=CLIPDataset(
-        dataset_split["images"].values,
-        dataset_split["captions"].values,
-        tokenizer,
-        split,
-
-    )
-
-    dataloader=DataLoader(
-        dataset,
-        batch_size=cfg.batch_size,
-        shuffle=True,
-        num_workers=cfg.num_workers,
-    )
-
-    return dataloader
+    model.train()
+    return loss_meter
 
 
 
 def train_epoch(model, train_loader, optimizer, lr_scheduler, step):
     loss_meter =AvgMeter()
     tqdm_object = tqdm(train_loader, total=len(train_loader))
-    for batch in tqdm_object:
-        # batch = {k: v.to(cfg.device) for k, v in batch.items() if k != "caption"}
-        image,caption, attention_mask=batch
+    for i,batch in enumerate(tqdm_object):
+
+        image,caption=batch["image"],batch["caption"]
         loss = model(batch)
         optimizer.zero_grad()
         loss.backward()
@@ -93,10 +66,36 @@ def get_image_embeddings(model, image_loader):
     return model, torch.cat(valid_image_embedding)
 
 
-    return model.image_encoder(image_loader,tokenizer)  
 
+def main() :
 
-if __name__=="__main__" :
-
+    ## Getting the dataset
     split_df=get_split()
-    datal=get_data(split_df,tokenizer=DistilBertTokenizer, split="train")
+    datal=get_data(split_df,tokenizer=DistilBertTokenizer.from_pretrained(cfg.text_tokenizer), split="train")
+    
+    model=CLIP(temperature=cfg.temperature, image_embeddings=cfg.image_embeddings, text_embeddings=cfg.text_embeddings)
+    model=model.to(cfg.device)
+
+    optimizer=optim.Adam(model.parameters(),lr=cfg.lr,weight_decay=cfg.weight_decay)
+
+    best_acc=float('inf')
+    for ep in range(cfg.epochs):
+
+        model.train()
+        loss=train_epoch(model,datal,optimizer,cosine_scheduler())
+        valid_loss=estimate_loss(model)
+
+        is_best=valid_loss<best_acc
+        if is_best :
+            best_acc=valid_loss
+            best_loss=best_acc
+
+        torch.save(
+            {
+                "epoch ": ep + 1 ,
+                "state_dict" : model.state_dict,
+                "optimizer " : optimizer.state_dict,
+                "best_loss ": best_loss
+            },
+            "./state/checkpoint.pt"
+        )
