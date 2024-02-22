@@ -77,6 +77,7 @@ def main() :
     model=model.to(cfg.device)
 
     optimizer=optim.Adam(model.parameters(),lr=cfg.lr,weight_decay=cfg.weight_decay)
+    
 
     best_acc=float('inf')
     for ep in range(cfg.epochs):

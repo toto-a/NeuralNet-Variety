@@ -71,5 +71,8 @@ def get_lr(optimizer):
 
 def cosine_scheduler(init_value, final_value, epochs, iter_per_epoch, warmup, warmup_start_value =0):
 
-    pass
+    iters=np.arange(epochs * iter_per_epoch - warmup)
+    cosine_lr=final_value + 0.5*(init_value-final_value) *(1+np.cos(np.pi*iters/len(iters)))
+
+    
 
