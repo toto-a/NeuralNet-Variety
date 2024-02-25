@@ -9,6 +9,7 @@ num_workers = 2
 lr = 3e-3
 lr_end=1e-3
 warmup_epochs=1
+warmuup_start_value=1e-6
 weight_decay = 0.1
 patience = 2
 factor = 0.5
