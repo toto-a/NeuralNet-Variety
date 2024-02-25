@@ -6,6 +6,7 @@ from utils import get_lr, AvgMeter, get_data, make_data, get_split,cosine_schedu
 from tqdm import tqdm
 from transformers import DistilBertTokenizer
 import config as cfg
+import os
 from clip_pretrained import CLIP
 
 @torch.no_grad()
@@ -31,9 +32,10 @@ def estimate_loss(model,valid_loader=get_split("valid")):
 def train_epoch(model, train_loader, optimizer, lr_scheduler, epoch):
     loss_meter =AvgMeter()
     tqdm_object = tqdm(train_loader, total=len(train_loader))
+    num_batches=get_num_batches(train_loader)
     for i,batch in enumerate(tqdm_object):
 
-        step=get_num_batches(train_loader) *epoch + i 
+        step=num_batches*epoch + i 
         update_lr(optimizer,lr_scheduler,step)
 
         image,caption=batch["image"],batch["caption"]
@@ -81,6 +83,8 @@ def main() :
 
     optimizer=optim.Adam(model.parameters(),lr=cfg.lr,weight_decay=cfg.weight_decay)
     cs_lr=cosine_scheduler(cfg.lr,cfg.lr_end,cfg.epochs,get_num_batches(datal),cfg.warmup_epochs,cfg.warmuup_start_value)
+
+    valid_l=[]
     
 
     best_acc=float('inf')
@@ -90,17 +94,35 @@ def main() :
         loss=train_epoch(model,datal,optimizer,cs_lr,ep)
         valid_loss=estimate_loss(model)
 
+        valid_l.append(valid_loss)
         is_best=valid_loss<best_acc
         if is_best :
             best_acc=valid_loss
             best_loss=best_acc
+
+        if not os.path.exists("./inference/state") : 
+            print("Exists ! ")
+            os.makedirs("./inference/state/")
+
+
+        
+        print( {
+                "epoch ": ep + 1 ,
+                "state_dict" : model.state_dict,
+                "optimizer " : optimizer.state_dict,
+                "best_loss ": best_loss,
+                "valid_loss" : valid_l
+                }
+        )
+
 
         torch.save(
             {
                 "epoch ": ep + 1 ,
                 "state_dict" : model.state_dict,
                 "optimizer " : optimizer.state_dict,
-                "best_loss ": best_loss
+                "best_loss ": best_loss,
+                "valid_loss" : valid_l
             },
             "./state/checkpoint.pt"
         )

@@ -2,6 +2,7 @@ import numpy as np
 from torch.utils.data  import DataLoader
 import config as cfg
 import pandas as pd
+import math
 from typing import Tuple
 from clip_dataset import CLIPDataset
 
@@ -70,13 +71,16 @@ def get_lr(optimizer):
         return param_group["lr"]
 
 def update_lr(optimizer, lr_schedule,step):
+    max_steps=len(lr_schedule) -1 
+    if step>max_steps  :
+         step=max_steps
     for param_group in optimizer.param_groups:
          param_group["lr"]=lr_schedule[step]
 
 
 def get_num_batches(dataloader : DataLoader) :
     num_samples=len(dataloader)
-    num_batches=num_samples//dataloader.batch_size
+    num_batches=math.floor(num_samples/dataloader.batch_size)
 
     return num_batches
 
