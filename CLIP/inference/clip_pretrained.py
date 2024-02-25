@@ -21,9 +21,9 @@ class CLIP(nn.Module):
 
     def forward(self, batch : Tuple[torch.Tensor , str, torch.Tensor]) :
 
-        image,caption, attention_mask=batch 
+        image,input_ids, attention_mask=batch["image"], batch["input_ids"], batch["attention_mask"]
         image_encoded=self.image_encoder(image)
-        caption_features=self.text_encoder(caption,
+        caption_features=self.text_encoder(input_ids,
                                             attention_mask)
         
         ### Getting the embeddings (image and text)
