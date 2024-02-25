@@ -4,13 +4,16 @@ from PIL import Image
 from typing import Tuple
 from torch.utils.data  import Dataset, DataLoader
 import albumentations as A
+import albumentations.pytorch.transforms as T
+import numpy as np
 
 import config as cfg
 
 
 class CLIPDataset(Dataset):
-    def __init__(self, images, captions , tokenizer ,transform: A.Compose = None, mode :str="train"):
-        self.transform = self._get_transform(mode)
+    def __init__(self, images, captions , tokenizer ,transform: True, mode :str="train"):
+        self.transform = transform
+        self.mode=mode
         self.images_path = images
         self.captions =list(captions)
 
@@ -19,7 +22,6 @@ class CLIPDataset(Dataset):
             padding=True,
             truncation=True,
             max_length=cfg.max_length,
-            return_tensors="pt"
         )
         
     
@@ -41,9 +43,19 @@ class CLIPDataset(Dataset):
         return len(self.captions)
     
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, str]:
+
+        item={
+            key : torch.tensor(values[idx])
+            for key,values in self.encoded_captions.items()
+        }
         image = self.images_path[idx]
         caption = self.captions[idx]
-        image = Image.open(os.path.join(self.images_path, image))
+        image = Image.open(os.path.join(cfg.image_path,image))
         if self.transform:
-            image = self.transform(image)
-        return image, caption
+            t = self._get_transform(self.mode)
+            image=t(image=np.array(image))
+        
+
+        item["image"]=torch.tensor(image["image"]).permute(2,1,0).float()
+        item["caption"]=caption
+        return item
