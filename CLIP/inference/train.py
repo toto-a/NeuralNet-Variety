@@ -10,7 +10,7 @@ import os
 from clip_pretrained import CLIP
 
 @torch.no_grad()
-def estimate_loss(model,valid_loader=get_split("valid")):
+def estimate_loss(model,valid_loader=get_data(get_split("valid"))):
     
     loss=AvgMeter()
     loss_meter =AvgMeter()
