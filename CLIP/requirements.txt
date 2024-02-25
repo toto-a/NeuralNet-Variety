@@ -1,0 +1,16 @@
+torch
+transformers
+datasets
+albumentations
+timm
+tqdm
+pandas
+numpy
+matplotlib
+
+### Others ### 
+jax
+scipy
+einops
+sentencepiece
+
