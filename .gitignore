@@ -135,4 +135,5 @@ GANs/dataset/
 GANs/logs/
 ResNet/data/
 data/
+CLIP/inference/data/
 *.ipynb
