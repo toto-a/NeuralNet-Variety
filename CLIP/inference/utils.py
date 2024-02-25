@@ -68,6 +68,11 @@ def get_lr(optimizer):
     for param_group in optimizer.param_groups:
         return param_group["lr"]
 
+def update_lr(optimizer, lr_schedule,step):
+    for param_group in optimizer.param_groups:
+         param_group["lr"]=lr_schedule[step]
+
+
 
 def cosine_scheduler(init_value, final_value, epochs, iter_per_epoch, warmup, warmup_start_value =0):
 
@@ -81,7 +86,7 @@ def cosine_scheduler(init_value, final_value, epochs, iter_per_epoch, warmup, wa
     cosine_lr=final_value + 0.5*(init_value-final_value) *(1+np.cos(np.pi*iters/len(iters)))
 
     schedule=np.concatenate((warmup_schedule,cosine_lr))
-    assert len(schedule)==iters*iter_per_epoch
+    assert len(schedule)==epochs*iter_per_epoch
 
     return schedule
 
