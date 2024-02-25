@@ -39,9 +39,10 @@ def get_data(dataset_split,tokenizer, split):
     dataloader=DataLoader(
         dataset,
         batch_size=cfg.batch_size,
-        shuffle=True,
+        shuffle=True if split=="train" else False,
         num_workers=cfg.num_workers,
     )
+    
 
     return dataloader
 
@@ -73,6 +74,11 @@ def update_lr(optimizer, lr_schedule,step):
          param_group["lr"]=lr_schedule[step]
 
 
+def get_num_batches(dataloader : DataLoader) :
+    num_samples=len(dataloader)
+    num_batches=num_samples//dataloader.batch_size
+
+    return num_batches
 
 def cosine_scheduler(init_value, final_value, epochs, iter_per_epoch, warmup, warmup_start_value =0):
 
