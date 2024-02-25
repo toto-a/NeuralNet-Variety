@@ -2,7 +2,7 @@ import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
-from utils import get_lr, AvgMeter, get_data, make_data, get_split,cosine_scheduler
+from utils import get_lr, AvgMeter, get_data, make_data, get_split,cosine_scheduler, update_lr
 from tqdm import tqdm
 from transformers import DistilBertTokenizer
 import config as cfg
@@ -28,18 +28,20 @@ def estimate_loss(model,valid_loader=get_split("valid")):
 
 
 
-def train_epoch(model, train_loader, optimizer, lr_scheduler, step):
+def train_epoch(model, train_loader, optimizer, lr_scheduler):
     loss_meter =AvgMeter()
     tqdm_object = tqdm(train_loader, total=len(train_loader))
     for i,batch in enumerate(tqdm_object):
 
+        step=train_loader.num_batches * cfg.epochs + i 
+        update_lr(optimizer,lr_scheduler,step)
         image,caption=batch["image"],batch["caption"]
+
         loss = model(batch)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        if step == "batch":
-            lr_scheduler.step()
+       
 
         ## Image
         count = image.size(0)
@@ -77,13 +79,14 @@ def main() :
     model=model.to(cfg.device)
 
     optimizer=optim.Adam(model.parameters(),lr=cfg.lr,weight_decay=cfg.weight_decay)
+    cs_lr=cosine_scheduler(cfg.lr,cfg.lr_end,cfg.epochs,datal.num_batches,cfg.warmup_epochs,cfg.warmuup_start_value)
     
 
     best_acc=float('inf')
     for ep in range(cfg.epochs):
 
         model.train()
-        loss=train_epoch(model,datal,optimizer,cosine_scheduler())
+        loss=train_epoch(model,datal,optimizer,cs_lr)
         valid_loss=estimate_loss(model)
 
         is_best=valid_loss<best_acc
