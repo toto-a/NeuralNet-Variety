@@ -137,5 +137,4 @@ ResNet/data/
 data/
 CLIP/inference/data/
 CLIP/inference/state/
-*.ipynb
 
