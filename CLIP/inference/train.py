@@ -2,7 +2,7 @@ import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
-from utils import get_lr, AvgMeter, get_data, make_data, get_split,cosine_scheduler, update_lr, get_num_batches
+from utils import get_lr, AvgMeter, get_data, make_data, get_split,cosine_scheduler, update_lr, get_num_batches, save_ckp
 from tqdm import tqdm
 from transformers import DistilBertTokenizer
 import config as cfg
@@ -10,19 +10,23 @@ import os
 from clip_pretrained import CLIP
 
 @torch.no_grad()
-def estimate_loss(model,valid_loader=get_data(get_split("valid"))):
+def estimate_loss(model,valid_df=get_split("valid")):
+    tokenizer=DistilBertTokenizer.from_pretrained(cfg.text_tokenizer)
+    valid_loader=get_data(valid_df,tokenizer=tokenizer,split="valid")
     
-    loss=AvgMeter()
     loss_meter =AvgMeter()
     tqdm_object = tqdm(valid_loader, total=len(valid_loader))
 
     model.eval()
     for i,batch in enumerate(tqdm_object):
         image,caption=batch["image"], batch["caption"]
+
+
+        loss=model(batch)
         count=batch["image"].size(0)
         loss_meter.update(loss.item(),count)
 
-        tqdm_object.set_postfix(loss_meter.avg())
+        tqdm_object.set_postfix(valid_loss=loss_meter.avg)
     
     model.train()
     return loss_meter
@@ -84,8 +88,6 @@ def main() :
     optimizer=optim.Adam(model.parameters(),lr=cfg.lr,weight_decay=cfg.weight_decay)
     cs_lr=cosine_scheduler(cfg.lr,cfg.lr_end,cfg.epochs,get_num_batches(datal),cfg.warmup_epochs,cfg.warmuup_start_value)
 
-    valid_l=[]
-    
 
     best_acc=float('inf')
     for ep in range(cfg.epochs):
@@ -94,38 +96,24 @@ def main() :
         loss=train_epoch(model,datal,optimizer,cs_lr,ep)
         valid_loss=estimate_loss(model)
 
-        valid_l.append(valid_loss)
-        is_best=valid_loss<best_acc
+        is_best=valid_loss.avg<best_acc
         if is_best :
             best_acc=valid_loss
             best_loss=best_acc
 
-        if not os.path.exists("./inference/state") : 
+        if not os.path.exists("./inference/state/") : 
             print("Exists ! ")
             os.makedirs("./inference/state/")
 
 
-        
-        print( {
+        checkpoint={
                 "epoch ": ep + 1 ,
-                "state_dict" : model.state_dict,
-                "optimizer " : optimizer.state_dict,
+                "state_dict" : model.state_dict(),
+                "optimizer " : optimizer.state_dict(),
                 "best_loss ": best_loss,
-                "valid_loss" : valid_l
-                }
-        )
-
-
-        torch.save(
-            {
-                "epoch ": ep + 1 ,
-                "state_dict" : model.state_dict,
-                "optimizer " : optimizer.state_dict,
-                "best_loss ": best_loss,
-                "valid_loss" : valid_l
+                "valid_loss" : valid_loss
             },
-            "./state/checkpoint.pt"
-        )
+        save_ckp(checkpoint, is_best,"./inference/state/checkpoint.pt")
 
 
 
