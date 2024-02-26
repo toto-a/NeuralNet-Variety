@@ -13,7 +13,7 @@ warmuup_start_value=1e-6
 weight_decay = 0.1
 patience = 2
 factor = 0.5
-epochs = 5
+epochs = 1
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 model_name = 'resnet50'

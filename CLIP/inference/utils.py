@@ -1,4 +1,6 @@
 import numpy as np
+import torch
+import shutil
 from torch.utils.data  import DataLoader
 import config as cfg
 import pandas as pd
@@ -65,6 +67,23 @@ class AvgMeter:
     def __repr__(self):
         text = f"{self.name}: {self.avg:.4f}"
         return text
+
+
+
+def save_ckp(state, is_best, checkpoint_dir):
+    f_path=checkpoint_dir+ "checkpoint.pt"
+    torch.save(state,f_path)
+
+    if is_best : 
+        best_fpath=checkpoint_dir + "best_model.pt"
+        shutil.copyfile(f_path,best_fpath)
+
+def load_ckp(checkpoint_fpath, model, optimizer):
+    checkpoint = torch.load(checkpoint_fpath)
+    model.load_state_dict(checkpoint['state_dict'])
+    optimizer.load_state_dict(checkpoint['optimizer'])
+    return model, optimizer, checkpoint['epoch']
+
 
 def get_lr(optimizer):
     for param_group in optimizer.param_groups:
