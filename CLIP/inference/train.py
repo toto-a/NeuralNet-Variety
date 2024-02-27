@@ -58,22 +58,6 @@ def train_epoch(model, train_loader, optimizer, lr_scheduler, epoch):
     return loss_meter
 
 
-def get_image_embeddings(model, image_loader):
-    tokenizer= DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
-    valid_loader=get_data("valid")
-
-    model=CLIP().to(cfg.device)
-    model.eval()
-
-    valid_image_embedding=[]
-    with torch.no_grad():
-        for batch in tqdm(valid_loader) :
-            image_features=model.image_encoder(batch["image"])
-            image_embeddin=model.image_projection(image_features)
-            valid_image_embedding.append(image_embeddin)
-    
-    return model, torch.cat(valid_image_embedding)
-
 
 
 def main() :
@@ -107,13 +91,13 @@ def main() :
 
 
         checkpoint={
-                "epoch ": ep + 1 ,
+                "epoch": ep + 1 ,
                 "state_dict" : model.state_dict(),
                 "optimizer " : optimizer.state_dict(),
-                "best_loss ": best_loss,
+                "best_loss": best_loss,
                 "valid_loss" : valid_loss
             },
-        save_ckp(checkpoint, is_best,"./inference/state/checkpoint.pt")
+        save_ckp(checkpoint, is_best,"./inference/state/")
 
 
 
