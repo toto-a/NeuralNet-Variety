@@ -6,4 +6,4 @@ This is a version of clip which uses DistilBert as the text encoder and a ResNet
 
 ## Results 
 
-[query](assets/clip.png)
+![query](CLIP/assets/clip.png)
