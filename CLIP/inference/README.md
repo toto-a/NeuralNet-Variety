@@ -6,4 +6,4 @@ This is a version of clip which uses DistilBert as the text encoder and a ResNet
 
 ## Results 
 
-![query](CLIP/assets/clip.png)
+![query](https://github.com/toto-a/NeuralNet-Variety/tree/main/CLIP/assets/out_clip.png)
