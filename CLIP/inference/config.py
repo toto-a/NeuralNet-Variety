@@ -2,8 +2,10 @@ import torch
 import os
 
 debug = True
-image_path = f"{os.getcwd()}/inference/data/Images"
-captions_path = f"{os.getcwd()}/inference/data/captions.txt"
+# image_path = f"{os.getcwd()}/inference/data/Images"
+image_path = f"{os.getcwd()}/data/Images"
+# captions_path = f"{os.getcwd()}/inference/data/captions.txt"
+captions_path = f"{os.getcwd()}/data/captions.txt"
 batch_size = 8
 num_workers = 0
 lr = 3e-3
