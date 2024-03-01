@@ -148,7 +148,7 @@ class CLIP(nn.Module):
 
         x=self.lm_final(x)
 
-        return x
+        return x[torch.arange(x.size(0)),torch.argmax(x,-1)]
 
 
 
