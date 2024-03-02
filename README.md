@@ -32,7 +32,6 @@ For example, see [here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Mi
 
  - [ ] Test for Flash_Attention
  - [ ] VQ-VAE implementation
- - [ ] CLIP
  - [ ] Proto
  - [ ] Mamba
 
