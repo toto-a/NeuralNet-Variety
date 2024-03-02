@@ -72,7 +72,7 @@ class CLIP(nn.Module):
         self.dims=dims
 
 
-        self.visual_model=self.dims.vision_model
+        self.visual_model=timm.create_model(self.dims.vision_model,num_classes=0)
         self.transformer=Transformer(
             width=dims.transformer_width,
             layers=dims.transformer_layers,
@@ -149,6 +149,24 @@ class CLIP(nn.Module):
         x=self.lm_final(x)
 
         return x[torch.arange(x.size(0)),torch.argmax(x,-1)]
+    
+
+    def forward(self,text, image):
+        text_features=self.encode_text(text)
+        image_features=self.encode_image(image)
+
+        ## Normalized features
+        text_features=text_features/text_features.norm(dim=1,keepdim=True)
+        image_features=image_features/image_features.norm(dim=1,keepdim=True)
+
+
+        ## Scale
+        self.scale=self.logit_scale.exp()
+        logits_per_image=self.scale*image_features@text_features.T 
+        logits_per_text=self.scale*text_features@image_features.T
+
+        return logits_per_image,logits_per_text
+
 
 
 
