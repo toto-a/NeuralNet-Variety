@@ -26,7 +26,7 @@ For example, see [here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Mi
 
 [Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/Flash_Attention) for an implementation of flash attention in pytorch 
 
-[Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/CLIP) for an implementation of CLIP 
+[Here](https://github.com/toto-a/NeuralNet-Variety/tree/main/CLIP) for an implementation of CLIP (from scratch or using pre-trained weight and model)
 
 ## Things to finish 
 
