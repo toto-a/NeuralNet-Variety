@@ -40,7 +40,7 @@ class SparseMoE(nn.Module):
 
         return output
 
-
+## // WIth TopK 
 class SparseKMoE(nn.Module):
     def __init__(self, arg : MoeEarg, fraction_experts =0.2) -> None:
         super().__init__()
@@ -54,11 +54,15 @@ class SparseKMoE(nn.Module):
         raw_gate=torch.einsum("...bnd, ...de->...bne", x, self.gate)
         raw_gate=raw_gate.softmax(dim=-1)
 
-        topk_gate_score,topk_gate_indices=raw_gate.topk(int(self.n_experts*self.fraction_experts))
+        topk_gate_score,topk_gate_indices=raw_gate.topk(int(self.n_experts*self.fraction_experts),dim=2,sorted=False)
         experts_outputs=torch.stack([experts(x) for experts in self.experts],dim=1)
+        experts_outputs=experts_outputs.transpose(1,2) #B*NE*T*C->B*T*NE*C
 
-        gate_topk=torch.zeros_like(topk_gate_score).scatter_(2,topk_gate_indices,1)*raw_gate
-        gate_topk=gate_topk.normalize(p=1,dim=-2)
+       
+        mask=torch.zeros_like(raw_gate).scatter_(2,topk_gate_indices,1)
+        gate_topk=mask*raw_gate ## Pluck out the corresponding experts
+        gate_topk=F.normalize(gate_topk,dim=2,p=1)
+    
 
         output=torch.einsum("...bte,...bteo->bto",gate_topk,experts_outputs)
         return output
